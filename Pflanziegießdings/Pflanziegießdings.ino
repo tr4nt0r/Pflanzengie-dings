@@ -23,8 +23,8 @@
 
 //Sensorkalibrierung
 const uint8_t HumidityAlert = 0; //Wert für Blynk-Pushnotification (todo) 
-const uint32_t HumidityMax = 215; //Sensorwert in Wasser
-const uint32_t HumidityMin = 1010; //Sensorwert in Luft
+const uint32_t HumidityMax = 100; //Sensorwert in Wasser
+const uint32_t HumidityMin = 1023; //Sensorwert in Luft
 const uint32_t humidityReadInverval = 3e+8; //Sensorwerterfassung alle 5min, Wert in µs
 
 BlynkTimer timer;
@@ -37,7 +37,7 @@ void setup()
 	pinMode(D1, OUTPUT);
 	//Wenn SleepMode deaktiviert dann per Timerinterval
 	//Sensorwert lesen (RST und D0 müssen gebrückt sein für Wakeup) 
-	timer.setInterval(humidityReadInverval, readHumiditySensor);
+	timer.setInterval(humidityReadInverval/1000, readHumiditySensor);
 	readHumiditySensor(); //Sensorwert Lesen nach wakeup
 }
 
@@ -51,8 +51,10 @@ void loop()
 void readHumiditySensor() {	
 	digitalWrite(D1, HIGH);	delay(10); //Sensor aktivieren
 	uint8_t val = map(analogRead(A0), HumidityMin, HumidityMax, 0UL, 100UL); //Sensorwert lesen und in Wert 0% - 100% umwandeln
-	BLYNK_LOG2("Pushing data...", val); //Wert an Blynk-Server pushen
+	BLYNK_LOG2("Raw sensor data: ", analogRead(A0));
+	BLYNK_LOG2("Pushing data: ", val); //Wert an Blynk-Server pushen
 	Blynk.virtualWrite(V1, val);
 	digitalWrite(D1, LOW);	//Sensor wieder deaktivieren
+	BLYNK_LOG("Gute Nacht");
 	ESP.deepSleep(humidityReadInverval); //Mikrocontroller für festgelegte Zeit in Tiefschlaf versetzen
 }
