@@ -15,8 +15,6 @@
 //Meien WiFi Zugangsdaten, Datei ist in .gitignore 
 #include "Credentials.h"
 
-#include <ESP8266WiFi.h>
-#include <BlynkSimpleEsp8266.h>
 #define BLYNK_PRINT Serial
 
 
