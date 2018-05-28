@@ -20,14 +20,19 @@
 
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
+#include "libraries/QuickStats/QuickStats.h"
 
 //Sensorkalibrierung
 const uint8_t HumidityAlert = 0; //Wert für Blynk-Pushnotification (todo) 
 const uint32_t HumidityMax = 100; //Sensorwert in Wasser
 const uint32_t HumidityMin = 1023; //Sensorwert in Luft
 const uint32_t humidityReadInverval = 3e+8; //Sensorwerterfassung alle 5min, Wert in µs
+const uint8_t numSensorReads = 20;
 
 BlynkTimer timer;
+QuickStats stats;
+
+
 
 void setup()
 {
@@ -50,8 +55,16 @@ void loop()
 
 void readHumiditySensor() {	
 	digitalWrite(D1, HIGH);	delay(10); //Sensor aktivieren
-	uint8_t val = map(analogRead(A0), HumidityMin, HumidityMax, 0UL, 100UL); //Sensorwert lesen und in Wert 0% - 100% umwandeln
-	BLYNK_LOG2("Raw sensor data: ", analogRead(A0));
+	float SensorReadings[numSensorReads];
+	for (int i = 0; i < numSensorReads; i++) {
+		SensorReadings[i] = (float) analogRead(A0); 
+		delay(10);
+	}
+
+	float medianRawVal = stats.median(SensorReadings, numSensorReads);
+
+	uint8_t val = map(medianRawVal, HumidityMin, HumidityMax, 0UL, 100UL); //Sensorwert lesen und in Wert 0% - 100% umwandeln
+	BLYNK_LOG2("Raw sensor data: ", val);
 	BLYNK_LOG2("Pushing data: ", val); //Wert an Blynk-Server pushen
 	Blynk.virtualWrite(V1, val);
 	digitalWrite(D1, LOW);	//Sensor wieder deaktivieren
