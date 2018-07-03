@@ -26,7 +26,7 @@
 const uint8_t HumidityAlert = 0; //Wert für Blynk-Pushnotification (todo) 
 const uint32_t HumidityMax = 100; //Sensorwert in Wasser
 const uint32_t HumidityMin = 1023; //Sensorwert in Luft
-const uint32_t humidityReadInverval = 3e+8; //Sensorwerterfassung alle 5min, Wert in µs
+const uint32_t humidityReadInverval = 36e+8; //Sensorwerterfassung alle 5min, Wert in µs
 const uint8_t numSensorReads = 20;
 
 BlynkTimer timer;
@@ -42,8 +42,8 @@ void setup()
 	pinMode(D1, OUTPUT);
 	//Wenn SleepMode deaktiviert dann per Timerinterval
 	//Sensorwert lesen (RST und D0 müssen gebrückt sein für Wakeup) 
-	timer.setInterval(humidityReadInverval/1000, readHumiditySensor);
-	readHumiditySensor(); //Sensorwert Lesen nach wakeup
+	timer.setInterval(humidityReadInverval/1000, run);
+	run();
 }
 
 void loop()
@@ -52,12 +52,17 @@ void loop()
 	timer.run();
 }
 
+void run() {
+	readHumiditySensor(D1, A0, V1); //Sensorwert Lesen nach wakeup
+	//readHumiditySensor(D2, A0, V1);
+	sleep();
+}
 
-void readHumiditySensor() {	
-	digitalWrite(D1, HIGH);	delay(10); //Sensor aktivieren
+void readHumiditySensor(uint8_t EnablePin, uint8_t SensorPin, uint8_t VirtualPin) {	
+	digitalWrite(EnablePin, HIGH);	delay(10); //Sensor aktivieren
 	float SensorReadings[numSensorReads];
 	for (int i = 0; i < numSensorReads; i++) {
-		SensorReadings[i] = (float) analogRead(A0); 
+		SensorReadings[i] = (float) analogRead(SensorPin); 
 		delay(10);
 	}
 
@@ -66,8 +71,11 @@ void readHumiditySensor() {
 	uint8_t val = map(medianRawVal, HumidityMin, HumidityMax, 0UL, 100UL); //Sensorwert lesen und in Wert 0% - 100% umwandeln
 	BLYNK_LOG2("Raw sensor data: ", val);
 	BLYNK_LOG2("Pushing data: ", val); //Wert an Blynk-Server pushen
-	Blynk.virtualWrite(V1, val);
-	digitalWrite(D1, LOW);	//Sensor wieder deaktivieren
+	Blynk.virtualWrite(VirtualPin, val);
+	digitalWrite(EnablePin, LOW);	//Sensor wieder deaktivieren
+}
+
+void sleep() {
 	BLYNK_LOG("Gute Nacht");
 	ESP.deepSleep(humidityReadInverval); //Mikrocontroller für festgelegte Zeit in Tiefschlaf versetzen
 }
