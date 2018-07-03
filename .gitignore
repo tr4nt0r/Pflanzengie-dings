@@ -261,3 +261,5 @@ __pycache__/
 *.pycCredentials.h
 Credentials.h
 __vm/
+*.sln
+*.vcxproj
